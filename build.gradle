@@ -42,8 +42,8 @@ dependencies {
     kapt 'io.micronaut.data:micronaut-data-processor:1.0.0'
 
     //swagger
-    kapt "io.micronaut.configuration:micronaut-openapi:1.3.3"
-    compile "io.swagger.core.v3:swagger-annotations"
+    kapt "io.micronaut.configuration:micronaut-openapi:1.4.2"
+    implementation "io.swagger.core.v3:swagger-annotations"
 
     //data source
 //    implementation "io.micronaut.configuration:micronaut-hibernate-jpa"
