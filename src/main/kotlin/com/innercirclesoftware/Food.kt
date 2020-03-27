@@ -8,6 +8,9 @@ import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.Post
+import io.reactivex.Maybe
+import io.reactivex.Single
+import java.util.*
 import javax.inject.Inject
 import javax.persistence.Column
 import javax.persistence.Entity
@@ -56,6 +59,15 @@ class FoodController @Inject constructor(private val foodRepository: FoodReposit
     fun findAll(@Body pageable: Pageable): Page<Food> = foodRepository.findAll(pageable)
 
     @Get(uri = "/{id}")
-    fun get(id: Int = 356430): Food? = foodRepository.findById(id).orElse(null)
+    fun get(id: Int = 356430): Maybe<Food> {
+        return Single.fromCallable { foodRepository.findById(id) }
+                .flatMapMaybe { foodOpt -> foodOpt.toMaybe() }
+    }
 
+}
+
+
+fun <T> Optional<T>.toMaybe(): Maybe<T> {
+    val value = this.orElse(null)
+    return if (value != null) Maybe.just(value) else Maybe.empty<T>()
 }
