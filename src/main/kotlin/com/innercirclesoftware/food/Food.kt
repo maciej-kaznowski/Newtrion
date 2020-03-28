@@ -1,17 +1,5 @@
-package com.innercirclesoftware
+package com.innercirclesoftware.food
 
-import io.micronaut.data.annotation.Repository
-import io.micronaut.data.model.Page
-import io.micronaut.data.model.Pageable
-import io.micronaut.data.repository.PageableRepository
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.reactivex.Maybe
-import io.reactivex.Single
-import java.util.*
-import javax.inject.Inject
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -20,6 +8,8 @@ import javax.persistence.Table
 inline class DataType(val value: String)
 
 object DataTypes {
+
+
     val BRANDED_FOOD = DataType("branded_food")
     val SUB_SAMPLE_FOOD = DataType("sub_sample_food")
     val SURVEY_FNDDS_FOOD = DataType("survey_fndds_food")
@@ -31,6 +21,18 @@ object DataTypes {
 
     //should not appear in DB, forced to define for no-arg constructor
     val UNKNOWN = DataType("unknown")
+
+    val ALL = listOf(
+            BRANDED_FOOD,
+            SUB_SAMPLE_FOOD,
+            SURVEY_FNDDS_FOOD,
+            SR_LEGACY_FOOD,
+            MARKET_ACQUISITION,
+            SAMPLE_FOOD,
+            AGRICULTURE_ACQUISITION,
+            FOUNDATION_FOOD
+    )
+
 }
 
 @Entity
@@ -47,27 +49,4 @@ data class Food(
             description = "",
             foodCategoryId = null
     )
-}
-
-@Repository
-interface FoodRepository : PageableRepository<Food, Int>
-
-@Controller("/foods")
-class FoodController @Inject constructor(private val foodRepository: FoodRepository) {
-
-    @Post
-    fun findAll(@Body pageable: Pageable): Page<Food> = foodRepository.findAll(pageable)
-
-    @Get(uri = "/{id}")
-    fun get(id: Int = 356430): Maybe<Food> {
-        return Single.fromCallable { foodRepository.findById(id) }
-                .flatMapMaybe { foodOpt -> foodOpt.toMaybe() }
-    }
-
-}
-
-
-fun <T> Optional<T>.toMaybe(): Maybe<T> {
-    val value = this.orElse(null)
-    return if (value != null) Maybe.just(value) else Maybe.empty<T>()
 }
