@@ -64,6 +64,9 @@ dependencies {
 //    implementation 'io.micronaut.data:micronaut-data-jdbc'
     //    runtimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
 
+    //rx
+    implementation("io.reactivex.rxjava2:rxkotlin:2.4.0")
+
 
     //testing
     testImplementation "io.micronaut.test:micronaut-test-junit5:1.1.3"

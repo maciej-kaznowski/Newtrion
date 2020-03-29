@@ -1,7 +1,7 @@
 package com.innercirclesoftware.nutrient
 
-import com.innercirclesoftware.utils.retrieve
-import io.micronaut.http.HttpRequest
+import com.innercirclesoftware.utils.get
+import com.innercirclesoftware.utils.post
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
@@ -14,18 +14,18 @@ import javax.inject.Inject
 class NutrientControllerTest {
 
     @Inject
-    @field:Client("/")
+    @field:Client("/nutrients")
     private lateinit var client: RxHttpClient
 
     @Test
     internal fun `test findById returns Nutrient when exists`() {
         val nutrient = testNutrient()
-        client.exchange(HttpRequest.POST("/nutrients", nutrient))
+        client.post<Any, Nutrient>(body = nutrient)
                 .test()
                 .await()
                 .assertComplete()
 
-        client.retrieve<Any, Nutrient>(HttpRequest.GET("/nutrients/${nutrient.id}"))
+        client.get<Nutrient>("/${nutrient.id}")
                 .test()
                 .await()
                 .assertValue(nutrient)
@@ -33,7 +33,7 @@ class NutrientControllerTest {
 
     @Test
     internal fun `test findById returns NotFound when does not exist`() {
-        client.exchange("/nutrients/1")
+        client.get<Any>("/1")
                 .test()
                 .await()
                 .assertError { error ->
