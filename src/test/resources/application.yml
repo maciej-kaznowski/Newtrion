@@ -10,7 +10,7 @@ datasources:
 jpa:
   default:
     packages-to-scan:
-      - 'com.innercirclesoftware.food'
+      - 'com.innercirclesoftware'
     properties:
       hibernate:
         hbm2ddl:
