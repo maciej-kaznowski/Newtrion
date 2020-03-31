@@ -1,24 +1,53 @@
 package com.innercirclesoftware.food
 
-import com.innercirclesoftware.utils.flatMapMaybe
-import io.micronaut.data.model.Page
-import io.micronaut.data.model.Pageable
-import io.micronaut.http.annotation.Body
-import io.micronaut.http.annotation.Controller
-import io.micronaut.http.annotation.Get
-import io.micronaut.http.annotation.Post
-import io.reactivex.Maybe
-import io.reactivex.Single
+import com.innercirclesoftware.food.food_nutrient.FoodNutrient
+import com.innercirclesoftware.food.food_nutrient.FoodNutrientRepository
+import com.innercirclesoftware.utils.toMaybe
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.annotation.*
+import io.reactivex.Completable
+import io.reactivex.Flowable
+import io.reactivex.rxkotlin.toFlowable
 import javax.inject.Inject
 
 @Controller("/foods")
-class FoodController @Inject constructor(private val foodRepository: FoodRepository) {
+class FoodController {
+
+    @Inject
+    private lateinit var foodRepository: FoodRepository
+
+    @Inject
+    private lateinit var foodNutrientRepository: FoodNutrientRepository
+
+    //TODO conflicts with saveFood()
+//    @Post
+//    fun findAll(@Body pageable: Pageable): Page<Food> = foodRepository.findAll(pageable)
 
     @Post
-    fun findAll(@Body pageable: Pageable): Page<Food> = foodRepository.findAll(pageable)
+    @Status(HttpStatus.CREATED)
+    fun saveFood(@Body food: Food) = foodRepository.save(food)
 
-    @Get(uri = "/{id}")
-    fun get(id: Int = 356430): Maybe<Food> {
-        return Single.fromCallable { foodRepository.findById(id) }.flatMapMaybe()
+    @Get(uri = "/{fdcId}")
+    fun getFood(fdcId: Int) = foodRepository.findById(fdcId).toMaybe()
+
+    @Post("/{fdcId}/nutrients")
+    @Status(HttpStatus.CREATED)
+    fun saveNutrients(fdcId: Int, @Body nutrients: Set<FoodNutrient>) {
+        val toSave = nutrients.map { nutrient -> nutrient.copy(fdcId = fdcId) }
+        foodNutrientRepository.saveAll(toSave)
+    }
+
+    @Get("/{fdcId}/nutrients")
+    fun getNutrients(fdcId: Int): Flowable<FoodNutrient> {
+        return foodNutrientRepository.findAll().toFlowable().filter { foodNutrient -> foodNutrient.fdcId == fdcId }
+    }
+
+    @Delete("/{fdcId}/nutrients")
+    fun deleteNutrients(fdcId: Int, @Body nutrientIds: Set<Int>): Completable {
+        return foodNutrientRepository.findAll().toFlowable()
+                .filter { foodNutrient -> foodNutrient.id in nutrientIds && foodNutrient.fdcId == fdcId }
+                .buffer(1000)
+                .doOnNext { foodNutrients -> foodNutrientRepository.deleteAll(foodNutrients) }
+                .ignoreElements()
     }
 }

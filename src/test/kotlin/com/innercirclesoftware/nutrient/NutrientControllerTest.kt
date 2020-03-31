@@ -18,7 +18,7 @@ class NutrientControllerTest {
     private lateinit var client: RxHttpClient
 
     @Test
-    internal fun `test findById returns Nutrient when exists`() {
+    fun `test findById returns Nutrient when exists`() {
         val nutrient = testNutrient()
         client.post<Any, Nutrient>(body = nutrient)
                 .test()
@@ -32,7 +32,7 @@ class NutrientControllerTest {
     }
 
     @Test
-    internal fun `test findById returns NotFound when does not exist`() {
+    fun `test findById returns NotFound when does not exist`() {
         client.get<Any>("/1")
                 .test()
                 .await()

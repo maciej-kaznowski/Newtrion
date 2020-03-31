@@ -3,6 +3,8 @@ package com.innercirclesoftware.food.category
 import com.innercirclesoftware.randoms.setOfRandomSize
 import com.innercirclesoftware.utils.getSetOf
 import com.innercirclesoftware.utils.post
+import io.kotlintest.shouldBe
+import io.kotlintest.shouldNotBe
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.annotation.MicronautTest
@@ -17,21 +19,31 @@ class FoodCategoryControllerTest {
     @field:Client("/foods/categories")
     private lateinit var client: RxHttpClient
 
-    private val categories: Set<FoodCategory> = setOfRandomSize { testFoodCategory() }.invoke()
+    @Inject
+    private lateinit var foodCategoryRepository: FoodCategoryRepository
+
+    private val categories = setOfRandomSize { testFoodCategory() }.invoke()
 
     @BeforeEach
-    internal fun setUp() {
-        client.post<Set<FoodCategory>, Any>("", categories)
-                .test()
-                .await()
-                .assertComplete()
-    }
+    internal fun setUp() = foodCategoryRepository.deleteAll()
 
     @Test
     internal fun `test GET returns all`() {
-        client.getSetOf<FoodCategory>()
-                .test()
-                .await()
+        foodCategoryRepository.saveAll(categories)
+        foodCategoryRepository.saveAll(emptyList())
+        foodCategoryRepository.findAll().toSet<FoodCategory>() shouldNotBe emptySet<FoodCategory>()
+
+        client.getSetOf<FoodCategory>().test().await()
                 .assertValue(categories)
+    }
+
+    @Test
+    internal fun `test POST creates categories`() {
+        foodCategoryRepository.findAll() shouldNotBe categories
+
+        client.post<Set<FoodCategory>, Any>(body = categories).test().await()
+                .assertComplete()
+
+        foodCategoryRepository.findAll().toSet() shouldBe categories
     }
 }
