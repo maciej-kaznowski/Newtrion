@@ -1,8 +1,8 @@
-package main.kotlin.com.innercirclesoftware.food
+package com.innercirclesoftware.food
 
-data class FoodDto(val todo: Any){
-
-    init {
-        TODO("Rename server Food.kt to")
-    }
-}
+data class FoodDto(
+        val fdcId: Int,
+        //val dataType: DataType, TODO
+        val description: String,
+        val foodCategoryId: String?
+)

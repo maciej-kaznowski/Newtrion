@@ -1,4 +1,4 @@
-package main.kotlin.com.innercirclesoftware.food
+package com.innercirclesoftware.food
 
 interface FoodOperations {
 

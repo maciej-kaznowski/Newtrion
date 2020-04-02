@@ -1,4 +1,4 @@
-package main.kotlin.com.innercirclesoftware.food.food_nutrient
+package com.innercirclesoftware.food.food_nutrient
 
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.CrudRepository

@@ -1,4 +1,4 @@
-package main.kotlin.com.innercirclesoftware.food.category
+package com.innercirclesoftware.food.category
 
 import io.micronaut.http.annotation.Body
 import io.micronaut.http.annotation.Controller
@@ -11,15 +11,15 @@ import javax.inject.Inject
 class FoodCategoryController {
 
     @Inject
-    private lateinit var foodCategoryRepository: FoodCategoryRepository
+    private lateinit var foodCategoryService: FoodCategoryService
 
     @Post
     fun saveAll(@Body entities: List<FoodCategory>): Single<List<Int>> {
-        return Single.fromCallable { foodCategoryRepository.saveAll(entities) }
+        return Single.fromCallable { foodCategoryService.saveAll(entities) }
                 .map { saved -> saved.map { category -> category.id } }
     }
 
     @Get
-    fun getAll(): List<FoodCategory> = foodCategoryRepository.findAll().toList()
+    fun getAll(): List<FoodCategory> = foodCategoryService.findAll().toList()
 
 }

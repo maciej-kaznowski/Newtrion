@@ -1,5 +1,18 @@
-package main.kotlin.com.innercirclesoftware.food
+package com.innercirclesoftware.food
 
+import com.innercirclesoftware.food.food_nutrient.FoodNutrient
+import com.innercirclesoftware.food.food_nutrient.FoodNutrientRepository
+import com.innercirclesoftware.rx_kotlin_utils.flatMapMaybe
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.repository.PageableRepository
+import io.reactivex.Completable
+import io.reactivex.Flowable
+import io.reactivex.Maybe
+import io.reactivex.Single
+import io.reactivex.rxkotlin.toFlowable
+import io.reactivex.rxkotlin.toObservable
+import javax.inject.Inject
+import javax.inject.Singleton
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -49,4 +62,57 @@ data class Food(
             description = "",
             foodCategoryId = null
     )
+}
+
+@Repository
+internal interface FoodRepository : PageableRepository<Food, Int>
+
+interface FoodService {
+
+    fun save(food: Food): Single<Food>
+    fun findById(fdcId: Int): Maybe<Food>
+
+    fun saveAllNutrients(fdcId: Int, nutrients: List<FoodNutrient>): Flowable<FoodNutrient>
+    fun findAllNutrients(fdcId: Int): Flowable<FoodNutrient>
+    fun deleteAllNutrients(fdcId: Int, nutrientIds: Set<Int>): Completable
+
+}
+
+@Singleton
+class FoodServiceImpl : FoodService {
+
+    @Inject
+    private lateinit var foodRepository: FoodRepository
+
+    @Inject
+    private lateinit var foodNutrientRepository: FoodNutrientRepository
+
+    override fun save(food: Food): Single<Food> {
+        return Single.fromCallable { foodRepository.save(food) }
+    }
+
+    override fun findById(fdcId: Int): Maybe<Food> {
+        return Single.fromCallable { foodRepository.findById(fdcId) }.flatMapMaybe()
+    }
+
+    override fun saveAllNutrients(fdcId: Int, nutrients: List<FoodNutrient>): Flowable<FoodNutrient> {
+        return nutrients.toObservable()
+                .map { nutrient -> nutrient.copy(fdcId = fdcId) }
+                .toList()
+                .map { nutrientsWithFdcId -> foodNutrientRepository.saveAll(nutrientsWithFdcId).toList() }
+                .flattenAsFlowable { it }
+    }
+
+    override fun findAllNutrients(fdcId: Int): Flowable<FoodNutrient> {
+        return foodNutrientRepository.findAll().toFlowable().filter { foodNutrient -> foodNutrient.fdcId == fdcId }
+    }
+
+    override fun deleteAllNutrients(fdcId: Int, nutrientIds: Set<Int>): Completable {
+        return foodNutrientRepository.findAll().toFlowable()
+                .filter { foodNutrient -> foodNutrient.id in nutrientIds && foodNutrient.fdcId == fdcId }
+                .buffer(1000)
+                .doOnNext { foodNutrients -> foodNutrientRepository.deleteAll(foodNutrients) }
+                .ignoreElements()
+
+    }
 }

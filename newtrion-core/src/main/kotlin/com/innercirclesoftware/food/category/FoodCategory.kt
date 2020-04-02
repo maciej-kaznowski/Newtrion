@@ -1,7 +1,9 @@
-package main.kotlin.com.innercirclesoftware.food.category
+package com.innercirclesoftware.food.category
 
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.CrudRepository
+import javax.inject.Inject
+import javax.inject.Singleton
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -18,4 +20,22 @@ data class FoodCategory(
 }
 
 @Repository
-interface FoodCategoryRepository : CrudRepository<FoodCategory, Int>
+internal interface FoodCategoryRepository : CrudRepository<FoodCategory, Int>
+
+interface FoodCategoryService {
+
+    fun saveAll(foodCategories: Iterable<FoodCategory>): Iterable<FoodCategory>
+    fun findAll(): Iterable<FoodCategory>
+
+}
+
+@Singleton
+class FoodCategoryServiceImpl : FoodCategoryService {
+
+    @Inject
+    private lateinit var repo: FoodCategoryRepository
+
+    override fun saveAll(foodCategories: Iterable<FoodCategory>) = repo.saveAll(foodCategories).toList()
+    override fun findAll() = repo.findAll().toList()
+
+}
