@@ -18,7 +18,7 @@ micronaut:
 
 datasources:
   default:
-    url: jdbc:postgresql://192.168.86.100:5432/food
+    url: jdbc:postgresql://192.168.86.188:5432/food
 #    url: ${JDBC_URL:`jdbc:h2:mem:default;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE`}
     username: postgres
     password: postgres
