@@ -22,6 +22,7 @@ configurations {
 }
 
 dependencies {
+    api project(':newtrion-api')
     implementation project(':newtrion-core')
     implementation project(':rx-kotlin-utils')
 

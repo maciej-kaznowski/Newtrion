@@ -1,16 +1,16 @@
 package com.innercirclesoftware.food
 
-import com.innercirclesoftware.food.food_nutrient.FoodNutrient
-import io.micronaut.http.HttpStatus
-import io.micronaut.http.annotation.*
+import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Controller
 import io.reactivex.Completable
 import io.reactivex.Flowable
 import io.reactivex.Maybe
 import io.reactivex.Single
+import io.reactivex.rxkotlin.toObservable
 import javax.inject.Inject
 
 @Controller("/foods")
-class FoodController {
+class FoodController : FoodOperations {
 
     @Inject
     private lateinit var foodService: FoodService
@@ -19,26 +19,32 @@ class FoodController {
 //    @Post
 //    fun findAll(@Body pageable: Pageable): Page<Food> = foodRepository.findAll(pageable)
 
-    @Post
-    @Status(HttpStatus.CREATED)
-    fun saveFood(@Body food: Food): Single<Food> = foodService.save(food)
-
-    @Get(uri = "/{fdcId}")
-    fun getFood(fdcId: Int): Maybe<Food> = foodService.findById(fdcId)
-
-    @Post("/{fdcId}/nutrients")
-    @Status(HttpStatus.CREATED)
-    fun saveNutrients(fdcId: Int, @Body nutrients: List<FoodNutrient>): Single<List<Int>> {
-        return foodService.saveAllNutrients(fdcId, nutrients).map { nutrient -> nutrient.id }.toList()
+    override fun saveFood(@Body food: FoodDto): Single<FoodDto> {
+        return Single.fromCallable { food.toModel() }
+                .flatMap { foodModel -> foodService.save(foodModel) }
+                .map { foodModel -> foodModel.toApi() }
     }
 
-    @Get("/{fdcId}/nutrients")
-    fun getNutrients(fdcId: Int): Flowable<FoodNutrient> {
-        return foodService.findAllNutrients(fdcId)
+    override fun getFood(fdcId: Int): Maybe<FoodDto> {
+        return foodService.findById(fdcId)
+                .map { foodModel -> foodModel.toApi() }
     }
 
-    @Delete("/{fdcId}/nutrients")
-    fun deleteNutrients(fdcId: Int, @Body nutrientIds: Set<Int>): Completable {
+    override fun saveNutrients(fdcId: Int, nutrients: List<FoodNutrientDto>): Single<List<Int>> {
+        return nutrients.toObservable()
+                .map { dto -> dto.toModel() }
+                .toList()
+                .flatMap { nutrientModels -> foodService.saveAllNutrients(fdcId, nutrientModels).toList() }
+                .flatMapObservable { list -> list.toObservable() }
+                .map { nutrient -> nutrient.id }
+                .toList()
+    }
+
+    override fun getNutrients(fdcId: Int): Flowable<FoodNutrientDto> {
+        return foodService.findAllNutrients(fdcId).map { it.toApi() }
+    }
+
+    override fun deleteNutrients(fdcId: Int, nutrientIds: Set<Int>): Completable {
         return foodService.deleteAllNutrients(fdcId, nutrientIds)
     }
 }
