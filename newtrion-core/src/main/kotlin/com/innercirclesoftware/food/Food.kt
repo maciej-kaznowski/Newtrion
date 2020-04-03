@@ -2,9 +2,9 @@ package com.innercirclesoftware.food
 
 import com.innercirclesoftware.food.food_nutrient.FoodNutrient
 import com.innercirclesoftware.food.food_nutrient.FoodNutrientRepository
-import com.innercirclesoftware.rx_kotlin_utils.flatMapMaybe
 import io.micronaut.data.annotation.Repository
-import io.micronaut.data.repository.PageableRepository
+import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository
+import io.reactiverse.reactivex.pgclient.PgPool
 import io.reactivex.Completable
 import io.reactivex.Flowable
 import io.reactivex.Maybe
@@ -65,7 +65,7 @@ data class Food(
 }
 
 @Repository
-internal interface FoodRepository : PageableRepository<Food, Int>
+internal interface FoodRepository : ReactiveStreamsCrudRepository<Food, Int>
 
 interface FoodService {
 
@@ -81,14 +81,12 @@ interface FoodService {
 @Singleton
 class FoodServiceImpl : FoodService {
 
-    @Inject
-    private lateinit var foodRepository: FoodRepository
-
-    @Inject
-    private lateinit var foodNutrientRepository: FoodNutrientRepository
+    @Inject private lateinit var foodRepository: FoodRepository
+    @Inject private lateinit var foodNutrientRepository: FoodNutrientRepository
+    @Inject private lateinit var client: PgPool
 
     override fun save(food: Food): Single<Food> {
-        return Single.fromCallable { foodRepository.save(food) }
+        return Single.fromPublisher(foodRepository.save(food))
     }
 
     override fun findById(fdcId: Int): Maybe<Food> {
